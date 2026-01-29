@@ -9,8 +9,12 @@ export default function ChatInterface({ conversationId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
+  const [conversationTitle, setConversationTitle] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInputValue, setTitleInputValue] = useState('');
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const titleInputRef = useRef(null);
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -21,12 +25,21 @@ export default function ChatInterface({ conversationId }) {
     scrollToBottom();
   }, [messages, streamingMessage]);
 
-  // Load messages for conversation
+  // Load messages and conversation details
   useEffect(() => {
     if (conversationId) {
       loadMessages();
+      loadConversationDetails();
     }
   }, [conversationId]);
+
+  // Focus title input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
 
   const loadMessages = async () => {
     try {
@@ -37,6 +50,57 @@ export default function ChatInterface({ conversationId }) {
       }
     } catch (error) {
       console.error('Error loading messages:', error);
+    }
+  };
+
+  const loadConversationDetails = async () => {
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setConversationTitle(data.title || 'New Conversation');
+      }
+    } catch (error) {
+      console.error('Error loading conversation details:', error);
+    }
+  };
+
+  const startEditingTitle = () => {
+    setTitleInputValue(conversationTitle);
+    setIsEditingTitle(true);
+  };
+
+  const saveTitle = async () => {
+    if (!titleInputValue.trim()) {
+      setIsEditingTitle(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: titleInputValue.trim() })
+      });
+
+      if (response.ok) {
+        setConversationTitle(titleInputValue.trim());
+        setIsEditingTitle(false);
+        // Trigger a re-fetch of conversations in sidebar
+        window.dispatchEvent(new CustomEvent('conversation-updated'));
+      }
+    } catch (error) {
+      console.error('Error updating conversation title:', error);
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleTitleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveTitle();
+    } else if (e.key === 'Escape') {
+      setIsEditingTitle(false);
     }
   };
 
@@ -122,6 +186,34 @@ export default function ChatInterface({ conversationId }) {
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-[#1A1A1A]">
+      {/* Header with editable title */}
+      <div className="border-b dark:border-gray-800 bg-white dark:bg-[#1A1A1A] px-4 py-3">
+        <div className="max-w-3xl mx-auto">
+          {isEditingTitle ? (
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={titleInputValue}
+              onChange={(e) => setTitleInputValue(e.target.value)}
+              onKeyDown={handleTitleKeyDown}
+              onBlur={saveTitle}
+              className="text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent
+                       border-b-2 border-[#CC785C] focus:outline-none w-full max-w-md"
+              maxLength={100}
+            />
+          ) : (
+            <h1
+              onClick={startEditingTitle}
+              className="text-lg font-semibold text-gray-900 dark:text-gray-100 cursor-pointer
+                       hover:text-[#CC785C] transition-colors inline-block"
+              title="Click to edit title"
+            >
+              {conversationTitle || 'New Conversation'}
+            </h1>
+          )}
+        </div>
+      </div>
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-8">
         <div className="max-w-3xl mx-auto space-y-6">

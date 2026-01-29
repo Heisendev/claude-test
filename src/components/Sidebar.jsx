@@ -8,6 +8,17 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
 
   useEffect(() => {
     loadConversations();
+
+    // Listen for conversation updates
+    const handleConversationUpdate = () => {
+      loadConversations();
+    };
+
+    window.addEventListener('conversation-updated', handleConversationUpdate);
+
+    return () => {
+      window.removeEventListener('conversation-updated', handleConversationUpdate);
+    };
   }, []);
 
   const loadConversations = async () => {

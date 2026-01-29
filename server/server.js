@@ -91,14 +91,14 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, 'localhost', () => {
+app.listen(PORT, '127.0.0.1', () => {
   console.log('');
   console.log('╔════════════════════════════════════════════╗');
   console.log('║   Claude AI Clone - Backend Server        ║');
   console.log('╚════════════════════════════════════════════╝');
   console.log('');
-  console.log(`✓ Server running on http://localhost:${PORT}`);
-  console.log(`✓ Health check: http://localhost:${PORT}/health`);
+  console.log(`✓ Server running on http://127.0.0.1:${PORT}`);
+  console.log(`✓ Health check: http://127.0.0.1:${PORT}/health`);
   console.log(`✓ API Key: ${API_KEY ? '✓ Configured' : '✗ Not configured'}`);
   console.log('');
   console.log('Ready to accept requests...');

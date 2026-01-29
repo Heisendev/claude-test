@@ -200,7 +200,7 @@
       "Step 5: Verify title updates in sidebar list",
       "Step 6: Verify title change is persisted in database"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
