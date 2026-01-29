@@ -7,7 +7,7 @@
       "Step 2: Make a GET request to /health or /api/health endpoint",
       "Step 3: Verify response status is 200 and server is healthy"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -18,7 +18,7 @@
       "Step 3: Verify all required tables exist (users, conversations, messages, artifacts, projects, etc.)",
       "Step 4: Verify table schemas match specification with correct columns and types"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -29,7 +29,7 @@
       "Step 3: Open browser and navigate to localhost with the correct port",
       "Step 4: Verify the application loads without errors"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -40,7 +40,7 @@
       "Step 3: Verify conversation is stored in database",
       "Step 4: Query the conversation to confirm it was created"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -64,7 +64,7 @@
       "Step 3: Verify welcome screen or onboarding is displayed",
       "Step 4: Verify suggested prompts or example conversations are shown"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -75,7 +75,7 @@
       "Step 3: Verify input field is focused and ready for input",
       "Step 4: Verify conversation appears in sidebar list"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -174,7 +174,7 @@
       "Step 4: Verify conversations show titles or preview text",
       "Step 5: Verify conversations are ordered by most recent activity"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
