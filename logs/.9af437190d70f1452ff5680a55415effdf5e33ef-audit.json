@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/mika/Work/claude/claude-quickstarts/autonomous-coding/generations/my_project/logs/.9af437190d70f1452ff5680a55415effdf5e33ef-audit.json",
+    "files": [
+        {
+            "date": 1769713976427,
+            "name": "/Users/mika/Work/claude/claude-quickstarts/autonomous-coding/generations/my_project/logs/mcp-puppeteer-2026-01-29.log",
+            "hash": "44616caadc681029f2738511d5e94b7c6ef16af3de2b420814b9f8d6b59ee0b7"
+        }
+    ],
+    "hashType": "sha256"
+}

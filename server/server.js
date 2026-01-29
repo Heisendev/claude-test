@@ -57,13 +57,16 @@ app.get('/', (req, res) => {
   });
 });
 
-// API routes will be added here
-// TODO: Import and use route handlers
-// app.use('/api/conversations', conversationsRouter);
-// app.use('/api/messages', messagesRouter);
+// Import routes
+import conversationsRouter from './routes/conversations.js';
+import messagesRouter from './routes/messages.js';
+
+// API routes
+app.use('/api/conversations', conversationsRouter);
+app.use('/api/conversations', messagesRouter);
+// More routes will be added here
 // app.use('/api/artifacts', artifactsRouter);
 // app.use('/api/projects', projectsRouter);
-// app.use('/api/claude', claudeRouter);
 // etc.
 
 // Error handling middleware
@@ -88,7 +91,7 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, 'localhost', () => {
   console.log('');
   console.log('╔════════════════════════════════════════════╗');
   console.log('║   Claude AI Clone - Backend Server        ║');
