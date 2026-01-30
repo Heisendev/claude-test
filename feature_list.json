@@ -995,7 +995,7 @@
       "Step 7: Verify theme preference is saved",
       "Step 8: Refresh page and verify light theme persists"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1010,7 +1010,7 @@
       "Step 7: Verify theme preference is saved",
       "Step 8: Refresh and verify dark theme persists"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -1024,7 +1024,7 @@
       "Step 6: Change system theme to light",
       "Step 7: Verify app theme switches to light automatically"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
