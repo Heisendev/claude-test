@@ -240,7 +240,7 @@
       "Step 5: Create new conversations and verify pinned stays at top",
       "Step 6: Unpin and verify conversation returns to normal position"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -253,7 +253,7 @@
       "Step 5: Verify archived conversation appears in archive",
       "Step 6: Unarchive and verify conversation returns to main list"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -266,7 +266,7 @@
       "Step 5: Verify older conversations grouped appropriately",
       "Step 6: Verify groups are collapsible/expandable"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
