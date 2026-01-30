@@ -126,6 +126,16 @@ export default function ChatInterface({ conversationId }) {
         body: JSON.stringify({ content: userMessage.content })
       });
 
+      // Check if response is successful
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        setIsStreaming(false);
+        setStreamingMessage('');
+        // Optionally show error to user
+        return;
+      }
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';

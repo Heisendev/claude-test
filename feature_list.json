@@ -149,7 +149,7 @@
       "Step 4: Delete lines and verify textarea shrinks back",
       "Step 5: Verify textarea doesn't exceed maximum height"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
@@ -162,7 +162,7 @@
       "Step 5: Verify new line is added to input",
       "Step 6: Press Enter to send multi-line message"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
