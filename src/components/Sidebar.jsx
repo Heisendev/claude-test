@@ -7,6 +7,7 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -176,6 +177,51 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
     return date.toLocaleDateString();
   };
 
+  const getDateGroup = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const convDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    if (convDate.getTime() === today.getTime()) return 'Today';
+    if (convDate.getTime() === yesterday.getTime()) return 'Yesterday';
+    if (convDate >= sevenDaysAgo) return 'Previous 7 Days';
+    if (convDate >= thirtyDaysAgo) return 'Previous 30 Days';
+    return 'Older';
+  };
+
+  const groupConversationsByDate = (conversations) => {
+    const groups = {
+      'Today': [],
+      'Yesterday': [],
+      'Previous 7 Days': [],
+      'Previous 30 Days': [],
+      'Older': []
+    };
+
+    conversations.forEach(conv => {
+      const group = getDateGroup(conv.last_message_at || conv.created_at);
+      groups[group].push(conv);
+    });
+
+    // Return only groups that have conversations
+    return Object.entries(groups).filter(([_, convs]) => convs.length > 0);
+  };
+
+  const toggleGroup = (groupName) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }));
+  };
+
   return (
     <div className="w-64 h-screen bg-[#F5F5F5] dark:bg-[#2A2A2A] border-r border-gray-200 dark:border-gray-800 flex flex-col">
       {/* Header */}
@@ -252,7 +298,26 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
           </div>
         ) : (
           <div className="py-2">
-            {filteredConversations.map((conversation) => (
+            {groupConversationsByDate(filteredConversations).map(([groupName, groupConversations]) => (
+              <div key={groupName} className="mb-4">
+                {/* Group header */}
+                <button
+                  onClick={() => toggleGroup(groupName)}
+                  className="w-full px-4 py-2 flex items-center justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  <span>{groupName}</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${collapsedGroups[groupName] ? '-rotate-90' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Group conversations */}
+                {!collapsedGroups[groupName] && groupConversations.map((conversation) => (
               <div
                 key={conversation.id}
                 onClick={() => {
@@ -315,6 +380,8 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
                     </button>
                   </div>
                 </div>
+              </div>
+            ))}
               </div>
             ))}
           </div>
