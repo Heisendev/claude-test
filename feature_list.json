@@ -347,7 +347,7 @@
       "Step 5: Verify Claude Opus 4.1 is present",
       "Step 6: Verify current selection is highlighted"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",

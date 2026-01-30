@@ -53,7 +53,7 @@ router.post('/:conversationId/messages', async (req, res) => {
     }
 
     const db = getDatabase();
-    const { content, images } = req.body;
+    const { content, images, model: requestModel } = req.body;
     const conversationId = req.params.conversationId;
 
     // Verify conversation exists
@@ -78,7 +78,8 @@ router.post('/:conversationId/messages', async (req, res) => {
 
     // Parse settings
     const settings = JSON.parse(conversation.settings || '{}');
-    const model = conversation.model || 'claude-sonnet-4-5-20250929';
+    // Use model from request, then conversation, then default
+    const model = requestModel || conversation.model || 'claude-sonnet-4-20250514';
 
     // Setup SSE headers
     res.setHeader('Content-Type', 'text/event-stream');

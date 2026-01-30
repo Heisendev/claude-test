@@ -12,9 +12,34 @@ export default function ChatInterface({ conversationId }) {
   const [conversationTitle, setConversationTitle] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInputValue, setTitleInputValue] = useState('');
+  const [selectedModel, setSelectedModel] = useState('claude-sonnet-4-20250514');
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const titleInputRef = useRef(null);
+  const modelDropdownRef = useRef(null);
+
+  // Available models
+  const models = [
+    {
+      id: 'claude-sonnet-4-20250514',
+      name: 'Claude Sonnet 4.5',
+      description: 'Balanced intelligence and speed',
+      contextWindow: '200K tokens'
+    },
+    {
+      id: 'claude-haiku-4-20250417',
+      name: 'Claude Haiku 4.5',
+      description: 'Fast and efficient',
+      contextWindow: '200K tokens'
+    },
+    {
+      id: 'claude-opus-4-20250514',
+      name: 'Claude Opus 4.1',
+      description: 'Most capable model',
+      contextWindow: '200K tokens'
+    }
+  ];
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -41,6 +66,20 @@ export default function ChatInterface({ conversationId }) {
     }
   }, [isEditingTitle]);
 
+  // Click outside handler for model dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(event.target)) {
+        setIsModelDropdownOpen(false);
+      }
+    };
+
+    if (isModelDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isModelDropdownOpen]);
+
   const loadMessages = async () => {
     try {
       const response = await fetch(`/api/conversations/${conversationId}/messages`);
@@ -59,6 +98,12 @@ export default function ChatInterface({ conversationId }) {
       if (response.ok) {
         const data = await response.json();
         setConversationTitle(data.title || 'New Conversation');
+        // Load model from conversation settings
+        if (data.model) {
+          setSelectedModel(data.model);
+        } else if (data.settings && data.settings.model) {
+          setSelectedModel(data.settings.model);
+        }
       }
     } catch (error) {
       console.error('Error loading conversation details:', error);
@@ -104,6 +149,24 @@ export default function ChatInterface({ conversationId }) {
     }
   };
 
+  const handleModelChange = async (modelId) => {
+    setSelectedModel(modelId);
+    setIsModelDropdownOpen(false);
+
+    // Update conversation settings with the new model
+    try {
+      await fetch(`/api/conversations/${conversationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: modelId })
+      });
+      // Trigger a re-fetch of conversations in sidebar
+      window.dispatchEvent(new CustomEvent('conversation-updated'));
+    } catch (error) {
+      console.error('Error updating model:', error);
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputValue.trim() || isStreaming) return;
 
@@ -123,7 +186,10 @@ export default function ChatInterface({ conversationId }) {
       const response = await fetch(`/api/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: userMessage.content })
+        body: JSON.stringify({
+          content: userMessage.content,
+          model: selectedModel
+        })
       });
 
       // Check if response is successful
@@ -196,31 +262,94 @@ export default function ChatInterface({ conversationId }) {
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-[#1A1A1A]">
-      {/* Header with editable title */}
+      {/* Header with editable title and model selector */}
       <div className="border-b dark:border-gray-800 bg-white dark:bg-[#1A1A1A] px-4 py-3">
-        <div className="max-w-3xl mx-auto">
-          {isEditingTitle ? (
-            <input
-              ref={titleInputRef}
-              type="text"
-              value={titleInputValue}
-              onChange={(e) => setTitleInputValue(e.target.value)}
-              onKeyDown={handleTitleKeyDown}
-              onBlur={saveTitle}
-              className="text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent
-                       border-b-2 border-[#CC785C] focus:outline-none w-full max-w-md"
-              maxLength={100}
-            />
-          ) : (
-            <h1
-              onClick={startEditingTitle}
-              className="text-lg font-semibold text-gray-900 dark:text-gray-100 cursor-pointer
-                       hover:text-[#CC785C] transition-colors inline-block"
-              title="Click to edit title"
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <div className="flex-1">
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef}
+                type="text"
+                value={titleInputValue}
+                onChange={(e) => setTitleInputValue(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={saveTitle}
+                className="text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent
+                         border-b-2 border-[#CC785C] focus:outline-none w-full max-w-md"
+                maxLength={100}
+              />
+            ) : (
+              <h1
+                onClick={startEditingTitle}
+                className="text-lg font-semibold text-gray-900 dark:text-gray-100 cursor-pointer
+                         hover:text-[#CC785C] transition-colors inline-block"
+                title="Click to edit title"
+              >
+                {conversationTitle || 'New Conversation'}
+              </h1>
+            )}
+          </div>
+
+          {/* Model Selector */}
+          <div className="relative ml-4" ref={modelDropdownRef}>
+            <button
+              onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+              className="flex items-center space-x-2 px-3 py-2 bg-gray-100 dark:bg-[#2A2A2A]
+                       text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200
+                       dark:hover:bg-[#3A3A3A] transition-colors text-sm font-medium"
             >
-              {conversationTitle || 'New Conversation'}
-            </h1>
-          )}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+              <span>{models.find(m => m.id === selectedModel)?.name || 'Select Model'}</span>
+              <svg className={`w-4 h-4 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`}
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {isModelDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#2A2A2A] rounded-lg shadow-xl
+                            border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                {models.map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => handleModelChange(model.id)}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#3A3A3A]
+                              transition-colors ${
+                                selectedModel === model.id
+                                  ? 'bg-[#FFF5F0] dark:bg-[#3A2A2A] border-l-4 border-[#CC785C]'
+                                  : 'border-l-4 border-transparent'
+                              }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                          {model.name}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                          {model.description}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500">
+                          Context: {model.contextWindow}
+                        </div>
+                      </div>
+                      {selectedModel === model.id && (
+                        <svg className="w-5 h-5 text-[#CC785C] flex-shrink-0 ml-2"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
