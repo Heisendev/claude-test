@@ -6,6 +6,7 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
   const [filteredConversations, setFilteredConversations] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,13 +37,19 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
     }
   };
 
-  // Filter conversations based on search query and sort by pinned status
+  // Filter conversations based on search query, archive status, and sort by pinned status
   useEffect(() => {
     let filtered = conversations;
 
+    // Filter by archive status
+    filtered = filtered.filter(conv =>
+      showArchived ? conv.is_archived : !conv.is_archived
+    );
+
+    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = conversations.filter(conv =>
+      filtered = filtered.filter(conv =>
         conv.title?.toLowerCase().includes(query) ||
         'new conversation'.includes(query)
       );
@@ -61,7 +68,7 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
     });
 
     setFilteredConversations(sorted);
-  }, [searchQuery, conversations]);
+  }, [searchQuery, conversations, showArchived]);
 
   const createNewConversation = async () => {
     if (isCreating) return;
@@ -133,6 +140,27 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
     }
   };
 
+  const toggleArchiveConversation = async (conversationId, currentlyArchived, e) => {
+    e.stopPropagation();
+
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}/archive`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: !currentlyArchived })
+      });
+
+      if (response.ok) {
+        const updatedConversation = await response.json();
+        setConversations(prev =>
+          prev.map(c => c.id === conversationId ? updatedConversation : c)
+        );
+      }
+    } catch (error) {
+      console.error('Error archiving conversation:', error);
+    }
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -192,6 +220,24 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
             </button>
           )}
         </div>
+
+        {/* Archive toggle */}
+        <div className="mt-3 flex items-center justify-between">
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+            <span>{showArchived ? 'Show Active' : 'Show Archived'}</span>
+          </button>
+          {showArchived && (
+            <span className="text-xs text-gray-500 dark:text-gray-500">
+              {filteredConversations.length} archived
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Conversations list */}
@@ -238,13 +284,24 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
                   </div>
 
                   <div className="absolute right-2 top-3 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!showArchived && (
+                      <button
+                        onClick={(e) => togglePinConversation(conversation.id, conversation.is_pinned, e)}
+                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                        title={conversation.is_pinned ? 'Unpin conversation' : 'Pin conversation'}
+                      >
+                        <svg className={`w-4 h-4 ${conversation.is_pinned ? 'text-[#CC785C]' : 'text-gray-500 dark:text-gray-400'}`} fill={conversation.is_pinned ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 20 20">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 2a.75.75 0 01.75.75v8.59l2.95-2.95a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.2 9.45a.75.75 0 011.06-1.06l2.95 2.95V2.75A.75.75 0 0110 2z"/>
+                        </svg>
+                      </button>
+                    )}
                     <button
-                      onClick={(e) => togglePinConversation(conversation.id, conversation.is_pinned, e)}
+                      onClick={(e) => toggleArchiveConversation(conversation.id, conversation.is_archived, e)}
                       className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                      title={conversation.is_pinned ? 'Unpin conversation' : 'Pin conversation'}
+                      title={conversation.is_archived ? 'Unarchive conversation' : 'Archive conversation'}
                     >
-                      <svg className={`w-4 h-4 ${conversation.is_pinned ? 'text-[#CC785C]' : 'text-gray-500 dark:text-gray-400'}`} fill={conversation.is_pinned ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 20 20">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 2a.75.75 0 01.75.75v8.59l2.95-2.95a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.2 9.45a.75.75 0 011.06-1.06l2.95 2.95V2.75A.75.75 0 0110 2z"/>
+                      <svg className={`w-4 h-4 ${conversation.is_archived ? 'text-[#CC785C]' : 'text-gray-500 dark:text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                       </svg>
                     </button>
                     <button
