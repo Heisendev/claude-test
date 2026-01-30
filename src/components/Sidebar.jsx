@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Sidebar({ currentConversationId, onConversationSelect }) {
   const [conversations, setConversations] = useState([]);
+  const [filteredConversations, setFilteredConversations] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
 
@@ -27,11 +29,27 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
       if (response.ok) {
         const data = await response.json();
         setConversations(data);
+        setFilteredConversations(data);
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
     }
   };
+
+  // Filter conversations based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredConversations(conversations);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = conversations.filter(conv =>
+      conv.title?.toLowerCase().includes(query) ||
+      'new conversation'.includes(query)
+    );
+    setFilteredConversations(filtered);
+  }, [searchQuery, conversations]);
 
   const createNewConversation = async () => {
     if (isCreating) return;
@@ -115,15 +133,47 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
         </button>
       </div>
 
+      {/* Search input */}
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-3 py-2 bg-white dark:bg-[#3A3A3A] border border-gray-300 dark:border-gray-700
+                     rounded-lg text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-[#CC785C] focus:border-transparent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Conversations list */}
       <div className="flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
           <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
             No conversations yet
           </div>
+        ) : filteredConversations.length === 0 ? (
+          <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
+            No conversations match "{searchQuery}"
+          </div>
         ) : (
           <div className="py-2">
-            {conversations.map((conversation) => (
+            {filteredConversations.map((conversation) => (
               <div
                 key={conversation.id}
                 onClick={() => {

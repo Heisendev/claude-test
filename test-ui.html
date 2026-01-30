@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Claude.ai Clone - UI Test Page</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 { color: #CC785C; }
+    .test-section {
+      background: #f5f5f5;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      border-left: 4px solid #CC785C;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .pending { background: #fff3cd; color: #856404; }
+    button {
+      background: #CC785C;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover { background: #b86949; }
+    .instructions {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .instructions ol {
+      margin-left: 20px;
+    }
+    .instructions li {
+      margin: 8px 0;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Claude.ai Clone - Manual UI Tests</h1>
+  <p>Use this page to manually verify UI functionality</p>
+
+  <div class="test-section">
+    <h2>📋 Test #9: Conversation Switching</h2>
+    <span class="status pending">PENDING VERIFICATION</span>
+
+    <div class="instructions">
+      <p><strong>Test Steps:</strong></p>
+      <ol>
+        <li>Open the app below (or in new tab)</li>
+        <li>Click "New Chat" twice to create 2 conversations</li>
+        <li>In conversation 1, note something distinctive</li>
+        <li>In conversation 2, note something different</li>
+        <li>Click conversation 1 in sidebar - verify it loads correctly</li>
+        <li>Click conversation 2 in sidebar - verify it loads correctly</li>
+        <li>Check that URL updates to /chat/{id}</li>
+        <li>Check that active conversation is highlighted in sidebar</li>
+      </ol>
+      <p><strong>Expected:</strong> Clicking conversations switches view, URL updates, highlighting works</p>
+    </div>
+
+    <button onclick="openApp()">Open App in New Tab</button>
+    <button onclick="document.getElementById('app-frame').src = 'http://localhost:5173'">Reload App Below</button>
+  </div>
+
+  <div class="test-section">
+    <h2>🔍 Test #11: Search Conversations</h2>
+    <span class="status pending">PENDING VERIFICATION</span>
+
+    <div class="instructions">
+      <p><strong>Test Steps:</strong></p>
+      <ol>
+        <li>Create 3+ conversations with distinct titles</li>
+        <li>Type a search query in the search box at top of sidebar</li>
+        <li>Verify list filters in real-time</li>
+        <li>Try partial matches - should work</li>
+        <li>Try different cases - should be case-insensitive</li>
+        <li>Clear search - all conversations should return</li>
+      </ol>
+      <p><strong>Expected:</strong> Real-time filtering, case-insensitive, partial matches work</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>⌨️ Test #12: Keyboard Shortcuts</h2>
+    <span class="status pending">PENDING VERIFICATION</span>
+
+    <div class="instructions">
+      <p><strong>Test Steps:</strong></p>
+      <ol>
+        <li>Click in the message input field</li>
+        <li>Type "Test message 1" and press Enter</li>
+        <li>Verify: Message is sent (appears in chat)</li>
+        <li>Type "Line 1" then press Shift+Enter</li>
+        <li>Verify: New line is added (message NOT sent)</li>
+        <li>Type "Line 2" then press Enter</li>
+        <li>Verify: Multi-line message is sent</li>
+      </ol>
+      <p><strong>Expected:</strong> Enter sends, Shift+Enter adds newline</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>🗑️ Test #10: Delete Conversation</h2>
+    <span class="status pending">PENDING VERIFICATION</span>
+
+    <div class="instructions">
+      <p><strong>Test Steps:</strong></p>
+      <ol>
+        <li>Hover over a conversation in the sidebar</li>
+        <li>Look for delete/trash icon on the right</li>
+        <li>Click the delete icon</li>
+        <li>Verify: Confirmation dialog appears</li>
+        <li>Click OK/Confirm</li>
+        <li>Verify: Conversation is removed from sidebar</li>
+        <li>Verify: If it was active conversation, you're redirected</li>
+      </ol>
+      <p><strong>Note:</strong> Currently uses browser confirm() - should be custom modal</p>
+    </div>
+  </div>
+
+  <hr style="margin: 40px 0;">
+
+  <h2>🖥️ App Preview</h2>
+  <p><em>Note: If the app doesn't load, make sure servers are running (npm run dev)</em></p>
+  <iframe id="app-frame" src="http://localhost:5173"></iframe>
+
+  <script>
+    function openApp() {
+      window.open('http://localhost:5173', '_blank');
+    }
+
+    // Check if servers are running
+    fetch('http://localhost:3000/api/health')
+      .then(r => r.json())
+      .then(data => {
+        console.log('✓ Backend is running:', data);
+      })
+      .catch(err => {
+        console.error('✗ Backend is not running');
+        alert('Backend server is not running! Please start it first.');
+      });
+  </script>
+
+  <div style="margin-top: 40px; padding: 20px; background: #e3f2fd; border-radius: 8px;">
+    <h3>📝 How to Use This Test Page</h3>
+    <ol>
+      <li>Ensure both servers are running (frontend on :5173, backend on :3000)</li>
+      <li>Work through each test section above</li>
+      <li>Mark tests as PASS/FAIL based on manual verification</li>
+      <li>Update feature_list.json for passing tests</li>
+      <li>Document any issues found</li>
+    </ol>
+  </div>
+</body>
+</html>
