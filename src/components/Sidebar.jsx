@@ -36,19 +36,31 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
     }
   };
 
-  // Filter conversations based on search query
+  // Filter conversations based on search query and sort by pinned status
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredConversations(conversations);
-      return;
+    let filtered = conversations;
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = conversations.filter(conv =>
+        conv.title?.toLowerCase().includes(query) ||
+        'new conversation'.includes(query)
+      );
     }
 
-    const query = searchQuery.toLowerCase();
-    const filtered = conversations.filter(conv =>
-      conv.title?.toLowerCase().includes(query) ||
-      'new conversation'.includes(query)
-    );
-    setFilteredConversations(filtered);
+    // Sort: pinned conversations first, then by date
+    const sorted = [...filtered].sort((a, b) => {
+      // Pinned conversations come first
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+
+      // Then sort by last_message_at or created_at
+      const dateA = new Date(a.last_message_at || a.created_at);
+      const dateB = new Date(b.last_message_at || b.created_at);
+      return dateB - dateA;
+    });
+
+    setFilteredConversations(sorted);
   }, [searchQuery, conversations]);
 
   const createNewConversation = async () => {
@@ -97,6 +109,27 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
       }
     } catch (error) {
       console.error('Error deleting conversation:', error);
+    }
+  };
+
+  const togglePinConversation = async (conversationId, currentlyPinned, e) => {
+    e.stopPropagation();
+
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}/pin`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned: !currentlyPinned })
+      });
+
+      if (response.ok) {
+        const updatedConversation = await response.json();
+        setConversations(prev =>
+          prev.map(c => c.id === conversationId ? updatedConversation : c)
+        );
+      }
+    } catch (error) {
+      console.error('Error pinning conversation:', error);
     }
   };
 
@@ -188,25 +221,42 @@ export default function Sidebar({ currentConversationId, onConversationSelect })
                           }`}
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0 pr-8">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {conversation.title || 'New Conversation'}
+                  <div className="flex-1 min-w-0 pr-16">
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {conversation.title || 'New Conversation'}
+                      </div>
+                      {conversation.is_pinned ? (
+                        <svg className="w-3 h-3 text-[#CC785C] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 2a.75.75 0 01.75.75v8.59l2.95-2.95a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.2 9.45a.75.75 0 011.06-1.06l2.95 2.95V2.75A.75.75 0 0110 2z"/>
+                        </svg>
+                      ) : null}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {formatDate(conversation.last_message_at || conversation.created_at)}
                     </div>
                   </div>
 
-                  <button
-                    onClick={(e) => deleteConversation(conversation.id, e)}
-                    className="absolute right-2 top-3 opacity-0 group-hover:opacity-100
-                             p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700
-                             transition-opacity"
-                  >
-                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                  <div className="absolute right-2 top-3 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => togglePinConversation(conversation.id, conversation.is_pinned, e)}
+                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      title={conversation.is_pinned ? 'Unpin conversation' : 'Pin conversation'}
+                    >
+                      <svg className={`w-4 h-4 ${conversation.is_pinned ? 'text-[#CC785C]' : 'text-gray-500 dark:text-gray-400'}`} fill={conversation.is_pinned ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 20 20">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 2a.75.75 0 01.75.75v8.59l2.95-2.95a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.2 9.45a.75.75 0 011.06-1.06l2.95 2.95V2.75A.75.75 0 0110 2z"/>
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => deleteConversation(conversation.id, e)}
+                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      title="Delete conversation"
+                    >
+                      <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
